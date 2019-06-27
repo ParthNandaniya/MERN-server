@@ -7,8 +7,8 @@ Back end server of MERN-auth project
 1. ``` cd MERN-server ```
 1. ``` yarn install ```
 1. ``` npm start ```
-1. go to ** http://localhost:9000/ ** on your browser
+1. server is up and running on port [4000](http://localhost:9000)
 
-now server is up and running and you can make request ** http://localhost:4000/users **
+you can make request ** http://localhost:4000/users **
 
 Happy coading...
