@@ -8,15 +8,15 @@ var express    = require("express"),
     configs    = require('../configs');
 
 var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-// mongoose.connect('mongodb://127.0.0.1/test');
-var conn = mongoose.connection;
+// var Schema = mongoose.Schema;
+// // mongoose.connect('mongodb://127.0.0.1/test');
+// var conn = mongoose.connection;
     
-var fs = require('fs');
+// var fs = require('fs');
     
-var Grid = require('gridfs-stream');
-Grid.mongo = mongoose.mongo;
-var gfs = Grid(conn.db);
+// var Grid = require('gridfs-stream');
+// Grid.mongo = mongoose.mongo;
+// var gfs = Grid(conn.db);
 
 const storage = new GridFsStorage({
     url: configs.mongoDB.baseURL,
@@ -24,26 +24,27 @@ const storage = new GridFsStorage({
         // console.log('gridFS', req.body, file);
         const { firstName, lastName, _id, email } = req.body;
         // console.log(req.file);
+        console.log('1')
 
-        User.findByIdAndUpdate(_id,
+        User.findOneAndUpdate({ _id },
             { "$push": { "media": { ...file, filename: `${_id}-${file.originalname}` } } },
             { "new": true, "upsert": true },
             function(error, data) {
                 if(error) {
                     return error;
                 }
+                console.log('2')
                 // console.log(data.media[data.media.length-1]);
                 // console.log(email);
-                const newMedia = new Media({ 
+                let newMedia = new Media({ 
                     ...file, 
-                    uploader: { id: _id, email }, 
+                    uploader: { id: _id, email, firstName, lastName }, 
                     // fileURL,
                     filename: `${_id}-${file.originalname}` 
                 });
 
                 newMedia.save()
-                    .then(media => {
-                        // console.log({ media });
+                    .then(savedMedia => {
                         if(file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg') {
                             return {
                                 bucketName: 'images',       //Setting collection name, default name is fs
@@ -68,6 +69,7 @@ const storage = new GridFsStorage({
                         // res.status(200).json({ result: 'successful', user });
                     })
                     .catch(err => {
+                        console.log('err', err);
                         return err;
                         // res.status(400).json({ result: 'failed', error: err });
                     });
@@ -93,10 +95,10 @@ router.post('/upload/:id', function(req, res) {
         if(error) {
             res.status(400).json({ result: 'failed', error });
         } else {
-            console.log(user);
+            // console.log(user);
             if(typeof user !== 'null') {
 
-                upload(req, res, (error) => {
+                upload(req, res, (error, data) => {
                     if(error){
                         res.status(400).json({ result: 'failed', error });
                     } else {
@@ -112,11 +114,15 @@ router.post('/upload/:id', function(req, res) {
 
 router.post('/getAllMedia', function(req, res) {
 
-    var readstream = gfs.createReadStream({
-        filename: '5d1cb16c93fb4c346cf7fc3c-app4.pn'
-    });
-
-    res.json({ readstream })
+    Media.find({}, null, function(error, media) {
+        if(error){
+            res.status(400).json({ result: 'failed', error });
+        }
+        if(media.length === 0) {
+            res.status(400).json({ result: 'failed', error: 'No Media Uploaded' });
+        }
+        res.json({ result: 'successful', media });
+    })
 
 
 })

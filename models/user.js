@@ -20,8 +20,7 @@ let User = new Schema({
     },
     date: { type: Date, default: Date.now },
     media: {
-        type: Array,
-        default: ''
+        type: Array
     }
     // lastLogin: { type: Date }
 });

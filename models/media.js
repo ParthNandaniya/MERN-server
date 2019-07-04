@@ -2,11 +2,14 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 let Media = new Schema({
-    fileURL: {
+    // fileURL: {
+    //     type: String,
+    //     unique: true
+    // },
+    filename: {
         type: String,
         unique: true
     },
-    filename: String,
     fieldname: String,
     originalname: String,
     encoding: String,
@@ -16,7 +19,9 @@ let Media = new Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
         },
-        email: String
+        email: String,
+        firstName: String,
+        lastName: String
     },
     date: { type: Date, default: Date.now }
 });
