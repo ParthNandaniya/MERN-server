@@ -7,7 +7,15 @@ var express    = require("express"),
     GridFsStorage = require('multer-gridfs-storage'),
     configs    = require('../configs');
 
+var app = express();
 var mongoose = require('mongoose');
+
+var Grid = require("gridfs-stream");
+eval(`Grid.prototype.findOne = ${Grid.prototype.findOne.toString().replace('nextObject', 'next')}`);
+
+var fs = require("fs");
+Grid.mongo = mongoose.mongo;
+const connection = mongoose.connection;
 // var Schema = mongoose.Schema;
 // // mongoose.connect('mongodb://127.0.0.1/test');
 // var conn = mongoose.connection;
@@ -18,13 +26,60 @@ var mongoose = require('mongoose');
 // Grid.mongo = mongoose.mongo;
 // var gfs = Grid(conn.db);
 
+var writestream;
+var readstream;
+var gfs;
+var buffer;
+
+// var readstreamFunction = (gfs, fileName, mimetype) => {
+//     writestream = gfs.createWriteStream({
+//         filename: `${fileName}`,
+//         content_type: mimetype, // image/jpeg or image/png
+//     });
+//     fs.createReadStream('/media').pipe(writestream);
+
+//     readstream = gfs.createReadStream({
+//         filename: `${fileName}`,
+//         content_type: mimetype,
+//     });
+
+//     readstream.on('error', function (err) {
+//         throw err;
+//     });
+//     readStream.on("data", function (chunk) {
+//         buffer += chunk;
+//     });
+
+//     // dump contents to console when complete
+//     readStream.on("end", function () {
+//         console.log("contents of file:\n\n", buffer);
+//     });
+// };
+
+connection.once('open', function() {
+
+    gfs = Grid(connection.db);
+        
+    
+        // streaming from gridfs
+    // readstreamFunction(gfs, fileName);
+
+    // console.log({readstream});
+    // //error handling, e.g. file does not exist
+    // readstream.on('error', function (err) {
+    //     console.log('An error occurred!', err);
+    //     throw err;
+    // });
+
+    // readstream.pipe(response);
+})
+
 const storage = new GridFsStorage({
     url: configs.mongoDB.baseURL,
     file: (req, file) => {
         // console.log('gridFS', req.body, file);
         const { firstName, lastName, _id, email } = req.body;
-        // console.log(req.file);
-        console.log('1')
+        console.log(file);
 
         User.findOneAndUpdate({ _id },
             { "$push": { "media": { ...file, filename: `${_id}-${file.originalname}` } } },
@@ -33,7 +88,6 @@ const storage = new GridFsStorage({
                 if(error) {
                     return error;
                 }
-                console.log('2')
                 // console.log(data.media[data.media.length-1]);
                 // console.log(email);
                 let newMedia = new Media({ 
@@ -123,8 +177,67 @@ router.post('/getAllMedia', function(req, res) {
         }
         res.json({ result: 'successful', media });
     })
+});
 
+router.post('/streamMedia', function(req, res) {
 
-})
+    const { fileName, originalname, id } = req.body;
+    // console.log({ fileName, originalname, id });
+
+    Media.findOne({ _id: id }, null, function(error, media) {
+        if(error) {
+            res.status(400).json({ result: 'failed', error });
+        }
+        const mimetype = media.mimetype;
+
+        // readstreamFunction(gfs, originalname, mimetype );
+
+        // gfs.createWriteStream({
+        //         filename: `${originalname}`,
+        //         // content_type: mimetype, // image/jpeg or image/png
+        // });
+        // var gridfs = app.get('gridfs');
+        // gfs.createReadStream({
+        //     // _id: req.params.fileId // or provide filename: 'file_name_here'
+        //     filename: `${originalname}`
+        // }).pipe(res);
+
+        // writestream = gfs.createWriteStream({
+        //     filename: `${originalname}`,
+        //     content_type: mimetype, // image/jpeg or image/png
+        // });
+        // console.log(__dirname)
+        // var readStream = fs.createReadStream('/media').pipe(writestream);
+    
+        // readstream = gfs.createReadStream({
+        //     filename: `${originalname}`,
+        //     content_type: mimetype,
+        // });
+        // console.log({readStream});
+        // readstream.on('error', function (err) {
+        //     console.log({ err})
+        //     throw err;
+        // });
+        // readstream.on('open', function () {
+        //     readstream.pipe(res);
+        // });
+        // readStream.on("data", function (chunk) {
+        //     buffer += chunk;
+        // });
+    
+        // // // dump contents to console when complete
+        // readStream.on("end", function () {
+        //     console.log("contents of file:\n\n", buffer);
+        // });
+    
+        // gfs.findOne({ _id: id }, function (err, file) {
+        //     console.log(file);
+        // });
+
+        // console.log({readstream});
+        res.json({ result: 'successful', media });
+    })
+
+});
 
 module.exports = router;

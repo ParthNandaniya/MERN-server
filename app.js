@@ -7,6 +7,8 @@ const router = express.Router();
 const PORT = 4000;
 const configs = require('./configs');
 
+
+
 let User = require('./models/user');
 
 // ALL ROUTES PATH
@@ -22,11 +24,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 mongoose.connect(`${configs.mongoDB.baseURL}`, { useNewUrlParser: true });
 const connection = mongoose.connection;
 
+
 connection.once('open', function() {
+    console.log("MongoDB database connection established successfully");
+
     mongoose.set('useNewUrlParser', true);
     mongoose.set('useFindAndModify', false);
     mongoose.set('useCreateIndex', true);
-    console.log("MongoDB database connection established successfully");
+
 })
 
 router.get("*", function(req, res){
